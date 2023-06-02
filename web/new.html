@@ -1,0 +1,291 @@
+<html>
+    <head>
+        <title>Create Stash</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+    </head>
+
+    <body>
+        <h1>Create Stash</h1>
+        <p>Create a secure filestash with a password.</p>
+        <ul>
+            <li>All files are encrypted & decrypted client-side with a key using AES-256-GCM</li>
+            <li>The server does not have access to the key or the unencrypted files</li>
+            <li>File types, size and names are also encrypted on the server</li>
+            <li>At the moment only files that are 2GB or less can be uploaded due to browser and AES-GCM limitations</li>
+            <li>You can generate a completely random unpredictable key, but it may be difficult to remember</li>
+            <li>You can also create a key from a passphrase and chain-convert it to make it more secure (hashing the hash), just make sure it's unpredictable</li>
+        </ul>
+        <br />
+        <h2>Add files</h2>
+        <input type="file" id="file" name="file" multiple>
+        <button id="clear-uploads">Clear uploads</button>
+        <br />
+        <p>Uploaded files:</p>
+        <ul id="files">
+            <li>None uploaded yet</li>
+        </ul>
+        <br />
+        <h2>Stash details</h2>
+
+        <label for="name">Name of stash:</label>
+        <input type="text" name="name" id="name">
+        <br />
+        <label for="expiry">Stash expiry (optional):</label>
+        <input type="datetime-local" name="expiry" id="expiry">
+        <br />
+        <label for="password">Password for stash (hex/passphrase):</label>
+        <input type="text" name="password" id="password">
+        <button id="password-generate">Generate</button>
+        <button id="passphrase-convert">Convert from passphrase</button>
+        <br />
+        <label for="algorithm">Encryption algorithm:</label>
+        <select name="algorithm" id="algorithm" disabled>
+            <option value="aes-gcm" selected>AES-256-GCM (more secure, provides integrity and tamper prevention, 2GB file limit)</option>
+            <option value="aes-cbc">AES-256-CBC (allows uploads larger than 2GB)</option>
+        </select>
+        <br />
+        <br />
+        <br />
+        <button id="submit">Create stash</button>
+    </body>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-sha3/0.8.0/sha3.min.js" integrity="sha512-PmGDkK2UHGzTUfkFGcJ8YSrD/swUXekcca+1wWlrwALIZho9JX+3ddaaI9wmmf8PmgDIpMtx6TU8YBJAZS0mPQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+        const nameRegex = /^[0-9a-zA-Z\s]+$/;
+
+        const fromHexString = (hexString) =>
+        Uint8Array.from(hexString.match(/.{1,2}/g).map((byte) => parseInt(byte, 16)));
+
+        const toHexString = (bytes) =>
+        bytes.reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '');
+
+        function formatBytes(bytes) {
+            const sizes = ["bytes", "KB", "MB", "GB"];
+            const base = 1024;
+            const exponent = Math.floor(Math.log(bytes) / Math.log(base));
+            const convertedSize = (bytes / Math.pow(base, exponent)).toFixed(2);
+            return convertedSize + " " + sizes[exponent];
+        }
+
+        function readFileAsync(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+
+                reader.onload = () => {
+                    const bytes = new Uint8Array(reader.result);
+                    resolve(bytes);
+                };
+
+                reader.onerror = () => {
+                    reject(reader.error);
+                };
+
+                reader.readAsArrayBuffer(file);
+            });
+        }
+        
+        let uploadedFiles = [];
+
+        function renderFileList() {
+            const list = document.getElementById('files');
+            list.innerHTML = '';
+
+            if (!uploadedFiles.length) {
+                let li = document.createElement("li");
+                li.innerHTML = "None uploaded yet";
+                list.appendChild(li);
+            } else {
+                for (let i = 0; i < uploadedFiles.length; i++) {
+                    let li = document.createElement('li');
+                    li.innerHTML = uploadedFiles[i].name + ` (${formatBytes(uploadedFiles[i].size)})`;
+                    list.appendChild(li);
+                }
+            }
+        }
+
+        // Listen for submitted files.
+        document.getElementById('file').addEventListener('change', function() {
+            const files = document.getElementById('file').files;
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                if (uploadedFiles.find(f => f.name === file.name)) continue;
+                if (file.size > 2147483648) {
+                    alert("Files above 2GB are not allowed with this encryption algorithm.");
+                    continue;
+                }
+                uploadedFiles.push(file);
+            }
+
+            renderFileList();
+            document.getElementById('file').value = "";
+        });
+
+        // Listen for password generation.
+        document.getElementById('password-generate').addEventListener('click', function() {
+            const password = document.getElementById('password');
+            let buf = new Uint8Array(32 + 20);
+            crypto.getRandomValues(buf);
+
+            password.value = toHexString(buf);
+        });
+
+        // Listen for passphrase generation.
+        document.getElementById("passphrase-convert").addEventListener("click", () => {
+            const password = document.getElementById('password');
+            const passphrase = password.value;
+            if (!passphrase) return alert("You need to enter a passphrase to generate a key.");
+
+            const shaHash = sha3_512(passphrase);
+            const shaHashDecoded = fromHexString(shaHash);
+            const key = toHexString(shaHashDecoded.slice(0, 32 + 20));
+
+            password.value = key;
+        });
+
+        document.getElementById("clear-uploads").addEventListener("click", function() {
+            uploadedFiles = [];
+            renderFileList();
+            document.getElementById('file').value = "";
+        });
+
+        function returnError(err) {
+            btn.innerText = "Submit";
+            btn.disabled = false;
+            alert(`Something went wrong while creating stash! ${err} - try again?`);
+        }
+
+        document.getElementById("submit").addEventListener("click", async function() {
+            const btn = document.getElementById("submit");
+
+            let name = document.getElementById("name").value.trim();
+            if (!name || !nameRegex.test(name) || name.length < 3 || name.length > 50) return alert("Stash name must exist and only contain characters a-Z, 0-9 and spaces, and be between 3 and 50 characters long.");
+
+            const password = document.getElementById("password").value;
+            if (!password || password.length != 104) return alert("Stash password must exist and be exactly 52-bytes long in hex.");
+            const passwordDecodedRaw = fromHexString(password);
+            const passwordDecoded = passwordDecodedRaw.slice(0, 32);
+            const stashPasswordDecoded = passwordDecodedRaw.slice(-20);
+            const stashPasswordHex = toHexString(stashPasswordDecoded);
+
+            let date = document.getElementById("expiry").value;
+            if (date) date = new Date(date).getTime().toString();
+
+            const rsakey = document.getElementById("privatekey").value;
+
+            if (!uploadedFiles.length) return alert("You need to upload at least one initial file.");
+
+            btn.disabled = true;
+            btn.innerText = "Creating stash session...";
+
+            setTimeout(async () => {
+                const createRequest = await fetch("/api/stash/create", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        access_value: stashPasswordHex,
+                        name,
+                        date
+                    }),
+                    credentials: "include"
+                });
+
+                if (createRequest.status === 401) return location.reload();
+                if (!createRequest.ok) return returnError("Request not ok");
+
+                const stashDetails = await createRequest.json();
+                if (stashDetails.error) return returnError(stashDetails.error);
+
+                const key = await crypto.subtle.importKey(
+                    "raw", passwordDecoded, { name: "AES-GCM" }, false, ["encrypt"]
+                );
+
+                // upload files
+                for (let i = 0; i < uploadedFiles.length; i++) {
+                    btn.innerText = `(file ${i + 1}/${uploadedFiles.length}) reading file contents...`;
+                    
+                    console.log("Reading file", uploadedFiles[i]);
+                    const file = await readFileAsync(uploadedFiles[i]);
+
+                    console.log("Encrypting file", uploadedFiles[i]);
+                    btn.innerText = `(file ${i + 1}/${uploadedFiles.length}) encrypting file...`;
+                    
+                    // encrypt file name and type
+                    const nameTypeIV = crypto.getRandomValues(new Uint8Array(16));
+                    const nameTypeIVHex = toHexString(nameTypeIV);
+                    const nameTypeEncrypted = await crypto.subtle.encrypt(
+                        { name: 'AES-GCM', iv: nameTypeIV },
+                        key,
+                        new TextEncoder().encode(uploadedFiles[i].name + "|" + uploadedFiles[i].size)
+                    );
+                    const nameTypeHex = toHexString(new Uint8Array(nameTypeEncrypted));
+
+                    const fileIV = crypto.getRandomValues(new Uint8Array(16));
+                    const fileIVHex = toHexString(fileIV);
+                    const fileEncrypted = await crypto.subtle.encrypt(
+                        { name: 'AES-GCM', iv: fileIV },
+                        key,
+                        file
+                    );
+                    btn.innerText = `(file ${i + 1}/${uploadedFiles.length}) uploading file 0%`;
+
+                    const fileRequest = await fetch(`/api/stash/${stashDetails.id}/upload`, {
+                        method: "POST",
+                        body: JSON.stringify({
+                            nameType: { iv: nameTypeIVHex, ciphertext: nameTypeHex },
+                            data: { iv: fileIVHex, size: fileEncrypted.byteLength }
+                        }),
+                        headers: {
+                            "X-Stash-Access": stashDetails.session,
+                            "Content-Type": "application/json"
+                        }
+                    });
+
+                    if (!fileRequest.ok) return returnError("File upload request failed");
+                    const fileRequestData = await fileRequest.json();
+
+                    const blob = new Blob([fileEncrypted], { type: 'application/octet-stream' });
+                    
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('PUT', `/api/stash/${stashDetails.id}/upload/${fileRequestData.session_id}`, true);
+                    xhr.setRequestHeader("X-Stash-Access", stashDetails.session);
+                    xhr.setRequestHeader("Content-Type", "application/octet-stream");
+
+                    const result = await (new Promise((resolve, reject) => {
+                        xhr.upload.addEventListener('progress', event => {
+                            if (event.lengthComputable) {
+                                btn.innerText = `(file ${i + 1}/${uploadedFiles.length}) uploading file ${Math.floor((event.loaded / event.total) * 100)}%`;
+                            }
+                        });
+
+                        xhr.onload = () => {
+                            if (xhr.status === 201) {
+                                resolve(true);
+                            } else {
+                                returnError("Upload of file failed");
+                                reject(null);
+                            }
+                        };
+
+                        xhr.onerror = () => {
+                            returnError('Network error occurred while uploading');
+                            reject(null);
+                        };
+
+                        xhr.send(blob);
+                    })).catch(err => null);
+
+                    if (!result) return;
+
+                    console.log("Upload done!");
+                }
+
+                btn.innerText = "Submit";
+                btn.disabled = false;
+
+                window.location.href = `/stash/${stashDetails.id}`;
+            }, 50);
+        });
+    </script>
+</html>

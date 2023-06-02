@@ -1,0 +1,46 @@
+<html>
+    <head>
+        <title>Authentication</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+    </head>
+
+    <body>
+        <p id="text"></p>
+    </body>
+
+    <noscript>
+        <p>Please enable JavaScript to continue!</p>
+    </noscript>
+
+    <script>
+        const text = document.getElementById("text");
+
+        async function main() {
+            const username = prompt("Welcome! To continue to this page, enter your username to authenticate.");
+            if (!username) return text.innerText = "Authentication cancelled! Refresh the page to try again.";
+
+            const password = prompt(`Authenticating as '${username}', enter your password to continue.`);
+            if (!password) return text.innerText = "Authentication cancelled! Refresh the page to try again.";
+
+            setTimeout(() => {
+                if (text.innerText) return;
+                text.innerText = "Hold on! We are just verifying your authentication details..."
+            }, 300);
+
+            const req = await fetch("/api/auth", {
+                method: "POST",
+                body: JSON.stringify({ username, password }),
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            });
+
+            if (req.status === 429) return text.innerText = "Authentication is currently rate-limited! Refresh the page to try again.";
+            if (!req.ok) return text.innerText = "Authentication failed! Refresh the page to try again.";
+
+            location.reload();
+        }
+
+        main();
+    </script>
+</html>

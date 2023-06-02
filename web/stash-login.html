@@ -1,0 +1,76 @@
+<html>
+    <head>
+        <title>View stash</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+    </head>
+
+    <body>
+        <h1>View file stash</h1>
+        <p>View and manage the contents of the stash.</p>
+        <br />
+        <h2>Full access</h2>
+        <p>Provide your access value + decryption key pair to access this stash.</p>
+        <br />
+        <input style="width: 300px;" type="password" name="password" id="password">
+        <button id="from-passphrase">From passphrase</button>
+        <button id="submit">Proceed</button>
+        <br /><br />
+        <h2>Alternative access</h2>
+        <p>If you don't have the decryption key, you can still manage the stash by entering the access value, you just won't be able to decrypt or view the files and names.</p>
+        <br />
+        <input style="width: 200px;" type="password" name="limited-password" id="limited-password">
+        <button id="limited-submit">Proceed with limited view</button>
+    </body>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-sha3/0.8.0/sha3.min.js" integrity="sha512-PmGDkK2UHGzTUfkFGcJ8YSrD/swUXekcca+1wWlrwALIZho9JX+3ddaaI9wmmf8PmgDIpMtx6TU8YBJAZS0mPQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+        const fromHexString = (hexString) =>
+        Uint8Array.from(hexString.match(/.{1,2}/g).map((byte) => parseInt(byte, 16)));
+        const toHexString = (bytes) =>
+        bytes.reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '');
+
+        const stash_id = window.location.pathname.split("/")[2];
+        
+        document.getElementById("from-passphrase").addEventListener("click", () => {
+            const password = document.getElementById('password');
+            const passphrase = password.value;
+            if (!passphrase) return alert("You need to enter a passphrase to generate a key.");
+
+            const shaHash = sha3_512(passphrase);
+            const shaHashDecoded = fromHexString(shaHash);
+            const key = toHexString(shaHashDecoded.slice(0, 32 + 20));
+
+            password.value = key;
+        });
+
+        document.getElementById("submit").addEventListener("click", async () => {
+            const key = document.getElementById("password").value;
+            if (!key) return alert("You have not entered a decryption + access value key pair.");
+            
+            const passwordDecodedRaw = fromHexString(key);
+            const passwordDecoded = passwordDecodedRaw.slice(0, 32);
+            const passwordHex = toHexString(passwordDecoded);
+            const stashPasswordDecoded = passwordDecodedRaw.slice(-20);
+            const stashPasswordHex = toHexString(stashPasswordDecoded);
+            
+            const request = await fetch(`/api/stash/${stash_id}/auth`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    access_value: stashPasswordHex
+                })
+            });
+
+            if (request.status === 429) return alert("Stash authentication is currently rate-limited, try again in a moment.");
+            if (!request.ok) return alert("Stash authentication failed, this could be due to an invalid stash password.");
+
+            const data = await request.json();
+
+            sessionStorage.setItem("key", passwordHex);
+            sessionStorage.setItem("session", data.session);
+            window.location.replace(`/stash/${stash_id}/view`);
+        });
+    </script>
+</html>

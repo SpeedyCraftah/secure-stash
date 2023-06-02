@@ -1,0 +1,237 @@
+<html>
+    <head>
+        <title>View stash</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+    </head>
+
+    <body>
+        <h1>Viewing stash:</h1>
+        <ul>
+            <li id="expires"></li>
+            <li>To ensure data is kept secure and not compromised, please remember to log out.</li>
+        </ul>
+        <br />
+        <h2>Stash options and management</h2>
+        <button id="logout">Log out/destroy session</button>
+        <button id="delete">Delete stash (requires auth)</button>
+        <button>Upload file (requires auth)</button>
+
+        <br /><br /><br />
+        <h2>Stash files and data</h2>
+        <ul id="files" style="display: flex; flex-direction: column; gap: 4px;">
+            <li>Loading and decrypting file names...</li>
+        </ul>
+    </body>
+
+    <style>
+        .am {
+            cursor: pointer;
+            color: blue;
+            text-decoration: underline;
+        }
+    </style>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.0/FileSaver.min.js" integrity="sha512-csNcFYJniKjJxRWRV1R7fvnXrycHP6qDR21mgz1ZP55xY5d+aHLfo9/FcGDQLfn2IfngbAHd8LdfsagcCqgTcQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+        const fromHexString = (hexString) =>
+        Uint8Array.from(hexString.match(/.{1,2}/g).map((byte) => parseInt(byte, 16)));
+        const toHexString = (bytes) =>
+        bytes.reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '');
+        function formatBytes(bytes) {
+            const sizes = ["bytes", "KB", "MB", "GB"];
+            const base = 1024;
+            const exponent = Math.floor(Math.log(bytes) / Math.log(base));
+            const convertedSize = (bytes / Math.pow(base, exponent)).toFixed(2);
+            return convertedSize + " " + sizes[exponent];
+        }
+
+        const stash_id = window.location.pathname.split("/")[2];
+
+
+        function ensureAuth(forced) {
+            return new Promise((resolve, reject) => {
+                if (!forced && document.cookie.includes("auth=")) return resolve(true);
+
+                const popup = window.open("/auth/popup", '_blank', 'width=500,height=400');
+                popup.onunload = function() {
+                    if (!popup.closed) return;
+                    if (!document.cookie.includes("auth=")) return resolve(false);
+                    return resolve(true);
+                }
+            });
+        }
+
+        document.getElementById("logout").addEventListener("click", () => {
+            sessionStorage.setItem("key", "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+            sessionStorage.clear();
+            document.cookie = "stash-access=;expires=Thu, 01 Jan 1970 00:00:00 GMT";
+            window.location.replace(`/stash/${stash_id}`);
+        });
+
+        document.getElementById("delete").addEventListener("click", async () => {
+            if (!(await ensureAuth())) return;
+
+            const request = await fetch(`/api/stash/${stash_id}`, {
+                method: "DELETE",
+                credentials: "include",
+                headers: {
+                    "X-Stash-Access": accessHex
+                }
+            });
+
+            if (!request.ok) {
+                if (request.status === 401) {
+                    const auth = await ensureAuth(true);
+                    if (!auth) return;
+                    else document.getElementById("delete").click();
+                } else alert("Could not delete the stash, try again?");
+            } else location.reload();
+        });
+
+        const keyHex = sessionStorage.getItem("key");
+        const accessHex = sessionStorage.getItem("session");
+        if (!keyHex || !accessHex) {
+            document.cookie = "stash-access=;expires=Thu, 01 Jan 1970 00:00:00 GMT";
+            window.location.replace(`/stash/${stash_id}`);
+        }
+        const keyRaw = fromHexString(keyHex);
+
+        let downloading = false;
+        async function onDownloadClick(nameType, id, iv) {
+            if (downloading) return;
+            downloading = true;
+            
+            const btn = document.getElementById(`${id}-dl`);
+            btn.disabled = true;
+            btn.innerText = "Downloading (0%)";
+
+            function returnError(err) {
+                alert(err);
+                btn.innerText = "Download";
+                btn.disabled = false;
+                downloading = false;
+            }
+
+            const request = await fetch(`/api/stash/${stash_id}/files/${id}/download`, {
+                method: "GET",
+                credentials: "include"
+            });
+
+            if (!request.ok) return returnError("Download for file has failed, try again?");
+
+            const reader = request.body.getReader();
+            const contentLength = parseInt(request.headers.get('Content-Length'));
+            let fileCiphertext = new Uint8Array(contentLength);
+
+            let receivedBytes = 0;
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                fileCiphertext.set(value, receivedBytes);
+
+                receivedBytes += value.length;
+                btn.innerText = `Downloading (${Math.floor((receivedBytes / contentLength) * 100)}%)`;
+            }
+
+            console.log(fileCiphertext);
+
+            btn.innerText = "Decrypting...";
+
+            const key = await crypto.subtle.importKey(
+                "raw", keyRaw, { name: "AES-GCM" }, false, ["decrypt"]
+            ).catch(() => null);
+
+            if (!key) return returnError("Could not import the decryption key provided to decrypt files, you may have an invalid decryption key.");
+
+            const ivDecoded = fromHexString(iv);
+            const dataDecrypted = await crypto.subtle.decrypt(
+                { name: 'AES-GCM', iv: ivDecoded },
+                key,
+                fileCiphertext
+            ).catch((err) => console.error(err));
+            if (!dataDecrypted) return returnError("Could not decrypt the file using the decryption key, you may have an invalid decryption key.");
+
+            const blob = new Blob([dataDecrypted]);
+            saveAs(blob, nameType);
+
+            btn.disabled = false;
+            btn.innerText = "Download";
+            downloading = false;
+        }
+
+        async function main() {
+            const stashDetailsRequest = await fetch(`/api/stash/${stash_id}/info`, {
+                method: "GET",
+                credentials: "include"
+            });
+
+            if (!stashDetailsRequest.ok) window.location.replace(`/stash/${stash_id}`);
+            const stash = await stashDetailsRequest.json();
+
+            document.querySelector("h1").innerText += " " + "\""+stash.name+"\"";
+            document.getElementById("expires").innerText = !stash.expires
+                ? `This stash is permanent and will not be automatically deleted.` : `This stash will delete itself automatically on ${new Date(stash.expires).toLocaleDateString()} at ${new Date(stash.expires).toLocaleTimeString()}.`;
+
+            const ul = document.getElementById("files");
+
+            function returnError(err) {
+                alert(err);
+                ul.innerHTML = "";
+                const li = document.createElement("li");
+                li.innerText = "Could not load the files in this stash."
+                ul.appendChild(li);
+            }
+
+            const filesRequest = await fetch(`/api/stash/${stash_id}/files`, {
+                method: "GET",
+                credentials: "include"
+            });
+
+            if (!filesRequest.ok) return returnError("Could not retrieve the files in this stash, try refreshing?");
+
+            const files = (await filesRequest.json()).files;
+            console.log(files);
+
+            ul.innerHTML = "";
+
+            const key = await crypto.subtle.importKey(
+                "raw", keyRaw, { name: "AES-GCM" }, false, ["decrypt"]
+            ).catch(() => null);
+            if (!key) return returnError("Could not import the decryption key provided to view files, you may have an invalid decryption key.");
+
+            for (let i = 0; i < files.length; i++) {
+                const fileData = files[i];
+                const iv = fromHexString(fileData.nameType.iv);
+                const cipherName = fromHexString(fileData.nameType.ciphertext);
+
+                const nameTypeDecrypted = await crypto.subtle.decrypt(
+                    { name: 'AES-GCM', iv },
+                    key,
+                    cipherName
+                ).catch((err) => console.error(err));
+                if (!nameTypeDecrypted) return returnError("Could not decrypt the file name using the decryption key, you may have an invalid decryption key.");
+
+                const decoder = new TextDecoder('utf-8');
+                const nameTypeSize = decoder.decode(nameTypeDecrypted).split("|");
+                const size = parseInt(nameTypeSize[nameTypeSize.length - 1]);
+                let nameType = nameTypeSize;
+                nameType.pop();
+                nameType = nameType.join("|");
+
+                const li = document.createElement("li");
+                li.innerText = `${nameType} (${formatBytes(size)}) `;
+
+                const btn = document.createElement("button");
+                btn.innerText = "Download";
+                btn.id = `${fileData.id}-dl`;
+                btn.onclick = () => onDownloadClick(nameType, fileData.id, fileData.data.iv);
+                li.append(btn);
+
+                ul.appendChild(li);
+            }
+        }
+
+        main();
+    </script>
+</html>

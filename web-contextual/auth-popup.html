@@ -1,0 +1,62 @@
+<html>
+    <head>
+        <title>Authentication</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+    </head>
+
+    <body>
+        <p id="text"></p>
+        <p id="closing" style="color: gray;"></p>
+    </body>
+
+    <noscript>
+        <p>Please enable JavaScript to continue!</p>
+    </noscript>
+
+    <script>
+        const text = document.getElementById("text");
+
+        function authFail(text) {
+            const closing = document.getElementById("closing");
+            document.getElementById("text").innerText = text;
+
+            closing.innerText = "Closing the authentication prompt automatically in 10 seconds..."
+            let count = 10;
+
+            setInterval(() => {
+                count--;
+                if (count <= 0) window.close();
+
+                closing.innerText = `Closing the authentication prompt automatically in ${count} seconds...`
+            }, 1000);
+        }
+
+        async function main() {
+            const username = prompt("Welcome! To perform this action, enter your username to authenticate.");
+            if (!username) return authFail("Authentication cancelled! Refresh the page to try again or close to cancel.");
+
+            const password = prompt(`Authenticating as '${username}', enter your password to continue.`);
+            if (!password) return authFail("Authentication cancelled! Refresh the page to try again or close to cancel.");
+
+            setTimeout(() => {
+                if (text.innerText) return;
+                text.innerText = "Hold on! We are just verifying your authentication details..."
+            }, 300);
+
+            const req = await fetch("/api/auth", {
+                method: "POST",
+                body: JSON.stringify({ username, password }),
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            });
+
+            if (req.status === 429) return authFail("Authentication is currently rate-limited! Refresh the page to try again or close to cancel.");
+            if (!req.ok) return authFail("Authentication failed! Refresh the page to try again or close to cancel.");
+
+            window.close();
+        }
+
+        main();
+    </script>
+</html>
