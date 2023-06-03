@@ -25,6 +25,13 @@ A remote storage stash written in Node.js which provides a front-end and back-en
 - Allow users to use a secure USB to store and exchange the decryption key with the client.
 - Better protection against DOS attacks against the server.
 - Ability to view images and videos in the stash without having to download the actual files.
+- File storage quotas to prevent storing too many files.
 
 ## How to run?
 Ensure node.js is installed and run `npm install` followed by `node index.js` to start the server.
+
+## Defaults
+There currently is no config file so you will have to modify the `index.js` file to modify behaviour/settings to your liking.
+- You should change the cookie secret to your own secret value instead of using the default.
+- You need to get yourself a TLS certificate for your domain and place them in the `./certs` directory to enable HTTPS.
+- You should change the default login credentials which are currently `speedy` and `speedy123` for privileged login, you can also add multiple accounts.
