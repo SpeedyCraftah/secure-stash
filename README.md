@@ -37,3 +37,7 @@ There currently is no config file so you will have to modify the `index.js` file
 - You should change the default login credentials which are currently `speedy` and `speedy123` for privileged login, you can also add multiple accounts.
 
 ## Screenshots
+![image](https://github.com/SpeedyCraftah/secure-stash/assets/45142584/d1045088-b7c2-48e7-9d1f-f1f9d05f9ef0)
+![image](https://github.com/SpeedyCraftah/secure-stash/assets/45142584/7b05e058-df91-4ba6-9f37-157a752c0833)
+![image](https://github.com/SpeedyCraftah/secure-stash/assets/45142584/22cfc428-f51b-4a7f-8a42-119c7fc439ae)
+![image](https://github.com/SpeedyCraftah/secure-stash/assets/45142584/89071733-028c-4fe6-b4f6-c49746d44ed2)
