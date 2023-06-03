@@ -35,3 +35,5 @@ There currently is no config file so you will have to modify the `index.js` file
 - You should change the cookie secret to your own secret value instead of using the default.
 - You need to get yourself a TLS certificate for your domain and place them in the `./certs` directory to enable HTTPS.
 - You should change the default login credentials which are currently `speedy` and `speedy123` for privileged login, you can also add multiple accounts.
+
+## Screenshots
