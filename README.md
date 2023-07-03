@@ -33,6 +33,7 @@ Ensure node.js is installed and run `npm install` followed by `node index.js` to
 ## Potential security threats
 - If an attacker were to obtain access to the server, they could modify the served front-end JavaScript to send the key to the server or some other remote location so that the data on the server can be decrypted, or skip encryption all-together and send uploaded files unencrypted.
   - This threat is planned to be mitigated by creating a browser extension, or something similar, which automatically verifies the integrity of the front-end page with known safe hashes, or PGP signatures of the pages only the owner can sign.
+    
 - Due to the nature of JavaScript and browsers, decryption keys could be kept in memory for an unlimited amount of time, and even potentially end up in swap space or other parts of memory, which an attacker could retrieve if they have remote or physical access to the system, known as a memory scraping attack.
   - There is no real mitigation to this at the moment as the storage of values and buffers is entirely up to the JavaScript engine, and cannot be influenced by the running code in any useful capacity, as would be the case with software on machines written in C, for example.
 
