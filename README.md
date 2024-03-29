@@ -26,6 +26,7 @@ A remote storage stash written in Node.js which provides a front-end and back-en
 - Better protection against DOS attacks against the server.
 - Ability to view images and videos in the stash without having to download the actual files.
 - File storage quotas to prevent storing too many files.
+- Take away trust in JavaScript's Crypto API in generating random keys by adding a manual entropy mode such as mouse/keyboard inputs.
 
 ## How to run?
 Ensure node.js is installed and run `npm install` followed by `node index.js` to start the server.
