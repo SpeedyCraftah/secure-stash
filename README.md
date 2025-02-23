@@ -11,7 +11,7 @@ An end-to-end encrypted remote storage stash written in Node.js which provides a
 
 ## What is shared with the server?
 - File name, file size, file type, file data, all in encrypted ciphertext form.
-- Stash expiry date, stash name, stash password, all unencrypted.
+- Stash expiry date, stash name, stash password (derived from the first part of the generated key, not used in actual encryption), all unencrypted.
 - Login credentials if logging in and performing a privileged action such as creating a stash.
 
 ## Libraries used
