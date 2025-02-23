@@ -1,5 +1,5 @@
 # Secure Stash Storage
-A remote storage stash written in Node.js which provides a front-end and back-end to storing files securely with no trust in the server.
+An end-to-end encrypted remote storage stash written in Node.js which provides a front-end and back-end to storing files securely with no trust in the server.
 
 ## How is this secure?
 - Files, file names and true file sizes are encrypted using AES-256-GCM which includes integrity and tamper protection alongside a strong block cipher.
