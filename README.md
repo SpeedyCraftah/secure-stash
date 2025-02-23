@@ -4,7 +4,7 @@ An end-to-end encrypted remote storage stash written in Node.js which provides a
 ## How is this secure?
 - Files, file names and true file sizes are encrypted using AES-256-GCM which includes integrity and tamper protection alongside a strong block cipher.
 - The server is never shown or given the decryption key at any point, all decryption and encryption happens client-side, the server only stores the resulting ciphertext.
-- Decryption keys are generated to be 256 bits which is the maximum that AES-256 can support and are generated using securely random numbers using the Crypto API.
+- Decryption keys are generated to be 256 bits which is the maximum that AES-256 can support and are generated using securely random numbers using the Crypto API, or optionally provided by the user if the Crypto API cannot be trusted.
 - Decryption keys can also be generated from a SHA-3-512 hash of a passphrase and can be chain-hashed to further secure the decryption key, which allows the user to remember keys and not have to write them down which could compromise security.
 - Stashes can have an automatic deletion date at which they are automatically deleted from the server without user interaction.
 - TLS certificate can be used to encrypt the connection between the client and server to further secure data.
