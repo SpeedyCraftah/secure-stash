@@ -27,6 +27,7 @@ An end-to-end encrypted remote storage stash written in Node.js which provides a
 - Ability to view images and videos in the stash without having to download the actual files.
 - File storage quotas to prevent storing too many files.
 - Take away trust in JavaScript's Crypto API in generating random keys by adding a manual entropy mode such as mouse/keyboard inputs.
+- Securely erase the stash files when deleted by overwriting the file with random bytes (effectively performing a DoD5220.22-M-compliant wipe on the stash files).
 
 ## How to run?
 Ensure node.js is installed and run `npm install` followed by `node index.js` to start the server.
