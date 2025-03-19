@@ -1,3 +1,5 @@
+**Note:** This is a public mirror. Not much has changed however; issues & pull requests here are still accepted.
+
 # Secure Stash Storage
 An end-to-end encrypted remote storage stash written in Node.js which provides a front-end and back-end to storing files securely with no trust in the server.
 
