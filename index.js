@@ -337,6 +337,10 @@ app.get("/stash/:stash_id/view", stashAuth, (req, res) => {
     res.sendFile(__dirname + "/web/stash-view.html")
 });
 
+app.get("/", (req, res) => {
+    res.sendFile(__dirname + "/web/index.html")
+});
+
 app.get("/api/stash/:stash_id/files/:file_id/download", stashAuth, (req, res) => {
     const fileID = req.params["file_id"];
     const fileData = db.prepare("SELECT id FROM files WHERE stash_id=? AND id=?").get(req.stash.id, fileID);
