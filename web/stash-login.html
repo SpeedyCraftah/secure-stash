@@ -11,14 +11,14 @@
         <br />
         <h2>Full access</h2>
         <p>Provide your access value + decryption key pair to access this stash.</p>
-        <br />
         <input style="width: 300px;" type="password" name="password" id="password">
-        <button id="from-passphrase">From passphrase</button>
         <button id="submit">Proceed</button>
-        <br /><br />
+        <h3 title="You most likely don't need to touch any of this.">Advanced (optional)</h3>
+        <button id="from-passphrase">From passphrase</button>
+        <input style="width: 40px;" value="1" id="hash-rounds" type="number" name="Unless told otherwise, you probably don't need to touch this value.">
+        <br /><br /><br />
         <h2>Alternative access</h2>
         <p>If you don't have the decryption key, you can still manage the stash by entering the access value, you just won't be able to decrypt or view the files and names.</p>
-        <br />
         <input style="width: 200px;" type="password" name="limited-password" id="limited-password">
         <button id="limited-submit">Proceed with limited view</button>
     </body>
@@ -37,11 +37,15 @@
             const passphrase = password.value;
             if (!passphrase) return alert("You need to enter a passphrase to generate a key.");
 
-            const shaHash = sha3_512(passphrase);
-            const shaHashDecoded = fromHexString(shaHash);
-            const key = toHexString(shaHashDecoded.slice(0, 32 + 20));
+            const hashRounds = parseInt(document.getElementById('hash-rounds').value);
+            if (!hashRounds || isNaN(parseInt(hashRounds)) || hashRounds <= 0) return alert("You need to provide a valid chain hash number that is > 0.");
 
-            password.value = key;
+            let shaHash;
+            for (let i = 0; i < hashRounds; i++) {
+                shaHash = toHexString(fromHexString(sha3_512(shaHash || passphrase)).slice(0, 32 + 20));
+            }
+
+            password.value = shaHash;
         });
 
         document.getElementById("submit").addEventListener("click", async () => {

@@ -38,7 +38,7 @@
         <input type="text" name="password" id="password">
         <button id="password-generate">Generate</button>
         <button id="passphrase-convert">Convert from passphrase</button>
-        <input style="width: 50px;" value="1" id="hash-number" type="number">
+        <input style="width: 50px;" value="1" id="hash-rounds" type="number">
         <br />
         <label for="algorithm">Encryption algorithm:</label>
         <select name="algorithm" id="algorithm" disabled>
@@ -142,11 +142,15 @@
             const passphrase = password.value;
             if (!passphrase) return alert("You need to enter a passphrase to generate a key.");
 
-            const shaHash = sha3_512(passphrase);
-            const shaHashDecoded = fromHexString(shaHash);
-            const key = toHexString(shaHashDecoded.slice(0, 32 + 20));
+            const hashRounds = parseInt(document.getElementById('hash-rounds').value);
+            if (!hashRounds || isNaN(parseInt(hashRounds)) || hashRounds <= 0) return alert("You need to provide a valid chain hash number that is > 0.");
 
-            password.value = key;
+            let shaHash;
+            for (let i = 0; i < hashRounds; i++) {
+                shaHash = toHexString(fromHexString(sha3_512(shaHash || passphrase)).slice(0, 32 + 20));
+            }
+
+            password.value = shaHash;
         });
 
         document.getElementById("clear-uploads").addEventListener("click", function() {
