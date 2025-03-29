@@ -113,7 +113,7 @@ setInterval(() => {
 
 async function auth(req, res, next) {
     if (config.reverse_proxy_auth_mode === true) {
-        if (!!req.headers["x-webauth-user-id"]) return next();
+        if (!!req.headers["x-webauth-proxied"]) return next();
         else return res.status(401).send();
     }
 
