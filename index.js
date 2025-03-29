@@ -229,7 +229,7 @@ app.post("/api/admin/stash/create", auth, (req, res) => {
     };
 
     db.prepare("INSERT INTO stashes(id,name,access_value,expires,session) VALUES(?,?,?,?,?)").run(data.id, data.name, data.access_value, data.expires, data.session);
-    fs.mkdirSync("./data/stashes/" + data.id);
+    fs.mkdirSync(path.join(stashDirectoryPath, data.id));
 
     res.status(200).json({ id: data.id, session: data.session });
 });
@@ -262,7 +262,8 @@ app.put("/api/admin/stash/:stash_id/upload/:sid", auth, stashAuth, (req, res) =>
     if (!session || session.stash_id !== id) return res.status(404).send();
     session.expires = Infinity;
 
-    const writeStream = fs.createWriteStream(`./data/stashes/${id}/${sid}`, { encoding: "binary" });
+    const fileLocation = path.join(stashDirectoryPath, id, sid);
+    const writeStream = fs.createWriteStream(fileLocation, { encoding: "binary" });
 
     let totalWritten = 0;
     req.on("data", chunk => {
@@ -271,7 +272,7 @@ app.put("/api/admin/stash/:stash_id/upload/:sid", auth, stashAuth, (req, res) =>
             writeStream.end();
             res.status(400).send();
             req.socket.destroy();
-            fs.rmSync(`./data/stashes/${id}/${sid}`);
+            fs.rmSync(fileLocation);
             delete uploadSessions[sid];
             return;
         }
@@ -285,7 +286,7 @@ app.put("/api/admin/stash/:stash_id/upload/:sid", auth, stashAuth, (req, res) =>
         writeStream.end();
         if (totalWritten !== session.data.size) {
             res.status(400).send();
-            fs.rmSync(`./data/stashes/${id}/${sid}`);
+            fs.rmSync(fileLocation);
             delete uploadSessions[sid];
             return;
         }
@@ -341,11 +342,11 @@ app.get("/api/stash/:stash_id/files/:file_id/download", stashAuth, (req, res) =>
     const fileData = db.prepare("SELECT id FROM files WHERE stash_id=? AND id=?").get(req.stash.id, fileID);
     if (!fileData) return res.status(404).send();
 
-    const fileStat = fs.statSync(`./data/stashes/${req.stash.id}/${fileID}`);
+    const fileStat = fs.statSync(path.join(stashDirectoryPath, req.stash.id, fileID));
     res.setHeader('Content-Type', 'application/octet-stream')
     .setHeader('Content-Length', fileStat.size)
     .status(200);
 
-    const fileStream = fs.createReadStream(`./data/stashes/${req.stash.id}/${fileID}`);
+    const fileStream = fs.createReadStream(path.join(stashDirectoryPath, req.stash.id, fileID));
     fileStream.pipe(res);
 });
