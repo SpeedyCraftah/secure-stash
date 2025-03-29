@@ -46,6 +46,7 @@ if (config.server_port_tcp && config.server_port_tcp.enabled) {
 }
 
 else if (config.server_unix_socket_tcp && config.server_unix_socket_tcp.enabled) {
+    if (fs.existsSync(config.server_unix_socket_tcp.path)) fs.rmSync(config.server_unix_socket_tcp.path);
     app.listen(config.server_unix_socket_tcp.path, (err) => {
         if (err) throw err;
 
