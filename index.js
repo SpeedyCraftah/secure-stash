@@ -87,6 +87,11 @@ setInterval(() => {
 }, 60000);
 
 async function auth(req, res, next) {
+    if (config.reverse_proxy_auth_mode === true) {
+        if (!!req.headers["x-webauth-user-id"]) return next();
+        else return res.status(401).send();
+    }
+
     if (req.signedCookies["auth"]) {
         const acc = accounts.find(a => a.token === req.signedCookies["auth"]);
         if (acc) {
@@ -152,22 +157,24 @@ app.get("/stash/:stash_id", (req, res) => {
     } else res.status(404).sendFile(__dirname + "/web-contextual/stash-404.html");
 });
 
-let accountAuthAttempts = 0;
-app.post("/api/auth", (req, res) => {
-    if (!req.body.username || !req.body.password) return res.status(400).send();
-
-    if (accountAuthAttempts > 10) return res.status(429).send();
-    accountAuthAttempts++;
-
-    const acc = accounts.find(a => a.username === req.body.username);
-    if (!acc || acc.password !== req.body.password) return res.status(401).send();
-
-    res.status(201).cookie("auth", acc.token, { signed: true, maxAge: 6.048e+8, secure: true }).send();
-});
-
-setInterval(() => {
-    accountAuthAttempts = 0;
-}, 120000);
+if (config.reverse_proxy_auth_mode === false) {
+    let accountAuthAttempts = 0;
+    app.post("/api/auth", (req, res) => {
+        if (!req.body.username || !req.body.password) return res.status(400).send();
+    
+        if (accountAuthAttempts > 10) return res.status(429).send();
+        accountAuthAttempts++;
+    
+        const acc = accounts.find(a => a.username === req.body.username);
+        if (!acc || acc.password !== req.body.password) return res.status(401).send();
+    
+        res.status(201).cookie("auth", acc.token, { signed: true, maxAge: 6.048e+8, secure: true }).send();
+    });
+    
+    setInterval(() => {
+        accountAuthAttempts = 0;
+    }, 120000);
+}
 
 app.post("/api/stash/create", auth, (req, res) => {
     if (!req.body.access_value || typeof req.body.access_value !== "string" || req.body.access_value.length > 40 || req.body.access_value.length < 10) {
