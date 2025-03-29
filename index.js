@@ -1,4 +1,3 @@
-const https = require("https");
 const fs = require("fs");
 const express = require("express");
 const cookieParser = require('cookie-parser');
@@ -27,9 +26,31 @@ db.prepare(`CREATE TABLE IF NOT EXISTS files (
     data_iv VARCHAR(32) NOT NULL
 )`).run();
 
-https.createServer({ key: fs.readFileSync("certs/tls.key"), cert: fs.readFileSync("certs/tls.crt") }, app).listen(4000, "192.168.218.193", () => {
-    console.log('server is running at port 4000')
-});
+if (config.server_port_tcp && config.server_port_tcp.enabled) {
+    if (config.server_tls && config.server_tls.enabled) {
+        require("https").createServer({
+            key: fs.readFileSync(config.server_tls.private_key),
+            cert: fs.readFileSync(config.server_tls.certificate)
+        }, app).listen(config.server_port_tcp.port, config.server_port_tcp.host, () => {
+            console.log(`HTTPS server is listening on port ${config.server_port_tcp.port}`)
+        });
+    } else {
+        require("http").createServer(app).listen(config.server_port_tcp.port, config.server_port_tcp.host, () => {
+            console.log(`HTTP server is listening on port ${config.server_port_tcp.port}`)
+        });
+    }
+}
+
+else if (config.server_unix_socket_tcp && config.server_unix_socket_tcp.enabled) {
+    app.listen(config.server_unix_socket_tcp.path, (err) => {
+        if (err) throw err;
+
+        fs.chmodSync(config.server_unix_socket_tcp.path, config.server_unix_socket_tcp.permissions);
+        console.log(`Unix socket HTTP server is listening on path '${config.server_unix_socket_tcp.path}'`);
+    });
+}
+
+else throw new Error("Both unix socket and HTTP server options cannot be disabled!");
 
 // use your own secret!
 app.use(cookieParser(config.cookie_secret), express.json({ strict: true }));
