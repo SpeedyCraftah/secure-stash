@@ -1,4 +1,4 @@
 node_modules
 certs/**
 data/**
-config.json
+config.js
