@@ -184,7 +184,7 @@
             btn.innerText = "Creating stash session...";
 
             setTimeout(async () => {
-                const createRequest = await fetch("/api/stash/create", {
+                const createRequest = await fetch("/api/admin/stash/create", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"
@@ -235,7 +235,7 @@
                     );
                     btn.innerText = `(file ${i + 1}/${uploadedFiles.length}) uploading file 0%`;
 
-                    const fileRequest = await fetch(`/api/stash/${stashDetails.id}/upload`, {
+                    const fileRequest = await fetch(`/api/admin/stash/${stashDetails.id}/upload`, {
                         method: "POST",
                         body: JSON.stringify({
                             nameType: { iv: nameTypeIVHex, ciphertext: nameTypeHex },
@@ -253,7 +253,7 @@
                     const blob = new Blob([fileEncrypted], { type: 'application/octet-stream' });
                     
                     const xhr = new XMLHttpRequest();
-                    xhr.open('PUT', `/api/stash/${stashDetails.id}/upload/${fileRequestData.session_id}`, true);
+                    xhr.open('PUT', `/api/admin/stash/${stashDetails.id}/upload/${fileRequestData.session_id}`, true);
                     xhr.setRequestHeader("X-Stash-Access", stashDetails.session);
                     xhr.setRequestHeader("Content-Type", "application/octet-stream");
 

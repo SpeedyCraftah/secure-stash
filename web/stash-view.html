@@ -71,7 +71,7 @@
         document.getElementById("delete").addEventListener("click", async () => {
             if (!(await ensureAuth())) return;
 
-            const request = await fetch(`/api/stash/${stash_id}`, {
+            const request = await fetch(`/api/admin/stash/${stash_id}`, {
                 method: "DELETE",
                 credentials: "include",
                 headers: {

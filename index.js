@@ -205,7 +205,7 @@ app.get("/api/is_rp_auth", (req, res) => {
     res.status(200).send(config.reverse_proxy_auth_mode === true ? "1" : "0");
 });
 
-app.post("/api/stash/create", auth, (req, res) => {
+app.post("/api/admin/stash/create", auth, (req, res) => {
     if (!req.body.access_value || typeof req.body.access_value !== "string" || req.body.access_value.length > 40 || req.body.access_value.length < 10) {
         return res.status(400).send();
     }
@@ -234,7 +234,7 @@ app.post("/api/stash/create", auth, (req, res) => {
     res.status(200).json({ id: data.id, session: data.session });
 });
 
-app.post("/api/stash/:stash_id/upload", auth, stashAuth, (req, res) => {
+app.post("/api/admin/stash/:stash_id/upload", auth, stashAuth, (req, res) => {
     const id = req.params["stash_id"];
 
     if (!req.body.nameType || typeof req.body.nameType !== "object" || typeof req.body.nameType.iv !== "string" || req.body.nameType.iv.length !== 32 || typeof req.body.nameType.ciphertext !== "string") {
@@ -254,7 +254,7 @@ app.post("/api/stash/:stash_id/upload", auth, stashAuth, (req, res) => {
     res.status(202).json({ session_id: sid });
 });
 
-app.put("/api/stash/:stash_id/upload/:sid", auth, stashAuth, (req, res) => {
+app.put("/api/admin/stash/:stash_id/upload/:sid", auth, stashAuth, (req, res) => {
     const id = req.params["stash_id"];
     const sid = req.params["sid"];
 
@@ -302,7 +302,7 @@ app.get("/api/stash/:stash_id/files", stashAuth, (req, res) => {
     res.status(200).json({ files: files.map(f => ({ id: f.id, nameType: { iv: f.name_type_iv, ciphertext: f.name_type }, data: { iv: f.data_iv } })) });
 });
 
-app.delete("/api/stash/:stash_id", auth, stashAuth, (req, res) => {
+app.delete("/api/admin/stash/:stash_id", auth, stashAuth, (req, res) => {
     deleteStash(req.stash.id);
     res.status(201).send();
 });
