@@ -32,7 +32,8 @@ An end-to-end encrypted remote storage stash written in Node.js which provides a
 - Securely erase the stash files when deleted by overwriting the file with random bytes (effectively performing a DoD5220.22-M-compliant wipe on the stash files).
 
 ## How to run?
-Ensure node.js is installed and run `npm install` followed by `node index.js` to start the server.
+- Copy `config.dev.js` and save as `config.js`, then change the config values to suit your requirements.
+- Ensure node.js is installed, run `npm install`, then run `node index.js` to start the server.
 
 ## Potential security threats
 - If an attacker were to obtain access to the server, they could modify the served front-end JavaScript to send the key to the server or some other remote location so that the data on the server can be decrypted, or skip encryption all-together and send uploaded files unencrypted.
@@ -40,12 +41,6 @@ Ensure node.js is installed and run `npm install` followed by `node index.js` to
     
 - Due to the nature of JavaScript and browsers, decryption keys could be kept in memory for an unlimited amount of time, and even potentially end up in swap space or other parts of memory, which an attacker could retrieve if they have remote or physical access to the system, known as a memory scraping attack.
   - There is no real mitigation to this at the moment as the storage of values and buffers is entirely up to the JavaScript engine, and cannot be influenced by the running code in any useful capacity, as would be the case with software on machines written in C, for example.
-
-## Defaults
-There currently is no config file so you will have to modify the `index.js` file to modify behaviour/settings to your liking.
-- You should change the cookie secret to your own secret value instead of using the default.
-- You need to get yourself a TLS certificate for your domain and place them in the `./certs` directory to enable HTTPS.
-- You should change the default login credentials which are currently `speedy` and `speedy123` for privileged login, you can also add multiple accounts.
 
 ## Screenshots
 ![image](https://github.com/SpeedyCraftah/secure-stash/assets/45142584/d1045088-b7c2-48e7-9d1f-f1f9d05f9ef0)
