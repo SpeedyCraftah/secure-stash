@@ -341,6 +341,10 @@ app.get("/", (req, res) => {
     res.sendFile(__dirname + "/web/index.html")
 });
 
+app.get("/favicon.ico", (req, res) => {
+    res.sendFile(__dirname + "/web/favicon.ico");
+});
+
 app.get("/api/stash/:stash_id/files/:file_id/download", stashAuth, (req, res) => {
     const fileID = req.params["file_id"];
     const fileData = db.prepare("SELECT id FROM files WHERE stash_id=? AND id=?").get(req.stash.id, fileID);

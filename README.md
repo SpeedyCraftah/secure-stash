@@ -67,3 +67,6 @@ For reverse proxy authorization to work properly, setup the following rules on t
 ![image](https://github.com/SpeedyCraftah/secure-stash/assets/45142584/7b05e058-df91-4ba6-9f37-157a752c0833)
 ![image](https://github.com/SpeedyCraftah/secure-stash/assets/45142584/22cfc428-f51b-4a7f-8a42-119c7fc439ae)
 ![image](https://github.com/SpeedyCraftah/secure-stash/assets/45142584/89071733-028c-4fe6-b4f6-c49746d44ed2)
+
+## Credits
+- Favicon by [Free Preloaders](https://freeicons.io).
