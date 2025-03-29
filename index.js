@@ -125,7 +125,7 @@ async function auth(req, res, next) {
         } else res.clearCookie("auth");
     }
 
-    if (req.method !== "GET") res.status(401).send();
+    if (req.method !== "GET") return res.status(401).send();
     res.sendFile(__dirname + "/web-contextual/auth.html");
 }
 
