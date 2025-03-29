@@ -3,6 +3,14 @@
 # Secure Stash Storage
 An end-to-end encrypted remote storage stash written in Node.js which provides a front-end and back-end to storing files securely with no trust in the server.
 
+## How to run?
+- Copy `config.dev.js` and save as `config.js`, then change the config values to suit your requirements.
+- Ensure node.js is installed, run `npm install`, then run `node index.js` to start the server.
+
+## How to update?
+If you've cloned the project using `git clone`, updating is as simple as running `git pull origin master`.
+*Do note config values may change from time to time, so if things don't work as expected after an update, see if `config.dev.js` was updated.*
+
 ## How is this secure?
 - Files, file names and true file sizes are encrypted using AES-256-GCM which includes integrity and tamper protection alongside a strong block cipher.
 - The server is never shown or given the decryption key at any point, all decryption and encryption happens client-side, the server only stores the resulting ciphertext.
@@ -31,9 +39,6 @@ An end-to-end encrypted remote storage stash written in Node.js which provides a
 - Take away trust in JavaScript's Crypto API in generating random keys by adding a manual entropy mode such as mouse/keyboard inputs.
 - Securely erase the stash files when deleted by overwriting the file with random bytes (effectively performing a DoD5220.22-M-compliant wipe on the stash files).
 
-## How to run?
-- Copy `config.dev.js` and save as `config.js`, then change the config values to suit your requirements.
-- Ensure node.js is installed, run `npm install`, then run `node index.js` to start the server.
 
 ## Potential security threats
 - If an attacker were to obtain access to the server, they could modify the served front-end JavaScript to send the key to the server or some other remote location so that the data on the server can be decrypted, or skip encryption all-together and send uploaded files unencrypted.
