@@ -18,13 +18,13 @@ You can enable reverse proxy mode by setting the config to `true`.
 
 ### Configurations?
 For reverse proxy authorization to work properly, setup the following rules on the reverse proxy for these paths:
-- Path "/" (aka: everything, default)
-- - Proxy request to the server as normal.
-- Path "/stash/new" & Path "/api/admin" & Path "/auth/popup"
-- - Authorize the user with your reverse proxy's flow.
-- - - If the user is not authorized and request is not a `GET`, return a `4xx` status.
-- - Set the header `x-webauth-proxied` (value does not matter).
-- - Proxy request to the server as normal.
+- Path `/` (aka: everything, default)
+  - Proxy request to the server as normal.
+- Path `/stash/new` & Path `/api/admin` & Path `/auth/popup`
+  - Authorize the user with your reverse proxy's flow.
+    - If the user is not authorized and request is not a `GET`, return a `4xx` status.
+  - Set the header `x-webauth-proxied` (value does not matter).
+  - Proxy request to the server as normal.
 
 ## How is this secure?
 - Files, file names and true file sizes are encrypted using AES-256-GCM which includes integrity and tamper protection alongside a strong block cipher.
