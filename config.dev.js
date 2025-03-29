@@ -38,5 +38,5 @@ module.exports = {
     // Listen using a unix socket file (faster, more secure, but less flexible & only works on unix + some other systems).
     // Especially recommended if using reverse proxy authentication.
     // Permissions for the socket are specified as octals (default u=rw,g=rw,o=---).
-    server_unix_socket_tcp: { enabled: false, path: "/tmp/stash_socket.sock", permissions: 0o750 }
+    server_unix_socket_tcp: { enabled: false, path: "/tmp/stash_socket.sock", permissions: 0o660 }
 };
