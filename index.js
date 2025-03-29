@@ -176,6 +176,10 @@ if (config.reverse_proxy_auth_mode === false) {
     }, 120000);
 }
 
+app.get("/api/is_rp_auth", (req, res) => {
+    res.status(200).send(config.reverse_proxy_auth_mode === true ? "1" : "0");
+});
+
 app.post("/api/stash/create", auth, (req, res) => {
     if (!req.body.access_value || typeof req.body.access_value !== "string" || req.body.access_value.length > 40 || req.body.access_value.length < 10) {
         return res.status(400).send();

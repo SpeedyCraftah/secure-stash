@@ -32,6 +32,17 @@
         }
 
         async function main() {
+            // Check if the application is using reverse proxy authentication.
+            const rpReq = await fetch("/api/is_rp_auth", {
+                method: "GET"
+            });
+            if (!rpReq.ok) return authFail("Something unexpected happened while querying the server. Refresh the page to try again or close to cancel.");
+            if ((await rpReq.text()) == "1") {
+                document.cookie = "auth=rp; path=/";
+                window.close();
+                return;
+            }
+
             const username = prompt("Welcome! To perform this action, enter your username to authenticate.");
             if (!username) return authFail("Authentication cancelled! Refresh the page to try again or close to cancel.");
 

@@ -50,7 +50,7 @@
 
         function ensureAuth(forced) {
             return new Promise((resolve, reject) => {
-                if (!forced && document.cookie.includes("auth=")) return resolve(true);
+                if (!forced && document.cookie.includes("auth=") && !document.cookie.includes("auth=")) return resolve(true);
 
                 const popup = window.open("/auth/popup", '_blank', 'width=500,height=400');
                 popup.onunload = function() {
