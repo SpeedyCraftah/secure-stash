@@ -37,12 +37,18 @@
         <input type="text" name="password" id="password">
         <button id="password-generate">Generate</button>
         <button id="passphrase-convert">Convert from passphrase</button>
+        <input style="width: 50px;" value="1" id="hash-number" type="number">
         <br />
         <label for="algorithm">Encryption algorithm:</label>
         <select name="algorithm" id="algorithm" disabled>
             <option value="aes-gcm" selected>AES-256-GCM (more secure, provides integrity and tamper prevention, 2GB file limit)</option>
             <option value="aes-cbc">AES-256-CBC (allows uploads larger than 2GB)</option>
         </select>
+        <br />
+        <label for="privatekey">RSA private signature key (optional):</label>
+        <br />
+        <textarea name="privatekey" id="privatekey" rows="10" cols="50"></textarea>
+        
         <br />
         <br />
         <br />
@@ -210,7 +216,6 @@
 
                     console.log("Encrypting file", uploadedFiles[i]);
                     btn.innerText = `(file ${i + 1}/${uploadedFiles.length}) encrypting file...`;
-                    
                     // encrypt file name and type
                     const nameTypeIV = crypto.getRandomValues(new Uint8Array(16));
                     const nameTypeIVHex = toHexString(nameTypeIV);
