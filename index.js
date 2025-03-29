@@ -7,6 +7,10 @@ const sqlite3 = require("better-sqlite3");
 const config = require("./config.js");
 const path = require("path");
 
+if (!fs.existsSync(config.data_location)) {
+    fs.mkdirSync(config.data_location);
+}
+
 const db = new sqlite3(path.join(config.data_location, "meta.sqlite"));
 db.pragma('journal_mode = WAL');
 
@@ -52,7 +56,6 @@ else if (config.server_unix_socket_tcp && config.server_unix_socket_tcp.enabled)
 
 else throw new Error("Both unix socket and HTTP server options cannot be disabled!");
 
-// use your own secret!
 app.use(cookieParser(config.cookie_secret), express.json({ strict: true }));
 
 const stashDirectoryPath = path.join(config.data_location, "stashes");
