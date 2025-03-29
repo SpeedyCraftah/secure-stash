@@ -76,7 +76,7 @@ setInterval(() => {
             delete uploadSessions[id];
         }
     }
-}, 5000);
+}, 20000);
 
 // Stash clearing.
 setInterval(() => {
