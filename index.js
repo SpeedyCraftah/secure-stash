@@ -5,7 +5,10 @@ const cookieParser = require('cookie-parser');
 const app = express();
 const crypto = require("crypto");
 const sqlite3 = require("better-sqlite3");
-const db = new sqlite3("./data/meta.sqlite");
+const config = require("./config.js");
+const path = require("path");
+
+const db = new sqlite3(path.join(config.data_location, "meta.sqlite"));
 db.pragma('journal_mode = WAL');
 
 db.prepare(`CREATE TABLE IF NOT EXISTS stashes (
@@ -29,17 +32,19 @@ https.createServer({ key: fs.readFileSync("certs/tls.key"), cert: fs.readFileSyn
 });
 
 // use your own secret!
-app.use(cookieParser("fa98ty42ht98oiwsugnh3240"), express.json({ strict: true }));
+app.use(cookieParser(config.cookie_secret), express.json({ strict: true }));
 
-if (!fs.existsSync("./data/stashes")) {
-    fs.mkdirSync("./data/stashes");
+const stashDirectoryPath = path.join(config.data_location, "stashes");
+if (!fs.existsSync(stashDirectoryPath)) {
+    fs.mkdirSync(stashDirectoryPath);
 }
 
-const accounts = [{
-    username: "speedy",
-    password: "speedy123",
-    token: crypto.randomBytes(150).toString("base64")
-}];
+const accounts = config.reverse_proxy_auth_mode === true ? null
+    : Object.entries(config.admin_accounts).map(e => ({
+        username: e[0],
+        password: e[1],
+        token: crypto.randomBytes(150).toString("base64")
+    })); 
 
 const uploadSessions = {};
 
@@ -49,7 +54,7 @@ function fetchStash(id) {
 }
 
 function deleteStash(id) {
-    fs.rmSync("./data/stashes/" + id, { recursive: true, force: true });
+    fs.rmSync(path.join(stashDirectoryPath, id), { recursive: true, force: true });
     db.prepare("DELETE FROM stashes WHERE id=?").run(id);
     db.prepare("DELETE FROM files WHERE stash_id=?").run(id);
 
