@@ -11,6 +11,21 @@ An end-to-end encrypted remote storage stash written in Node.js which provides a
 If you've cloned the project using `git clone`, updating is as simple as running `git pull origin master`.
 *Do note config values may change from time to time, so if things don't work as expected after an update, see if `config.dev.js` was updated.*
 
+## What is reverse proxy auth mode?
+This project is designed to work well when using a reverse proxy for authorization (assuming the below configurations were made), essentially having admin access from the reverse proxy instead of using the built-in accounts. 
+This also protects sensitive parts of the app such as admin API's to only authorized users.
+You can enable reverse proxy mode by setting the config to `true`.
+
+### Configurations?
+For reverse proxy authorization to work properly, setup the following rules on the reverse proxy for these paths:
+- Path "/" (aka: everything, default)
+- - Proxy request to the server as normal.
+- Path "/stash/new" & Path "/api/admin"
+- - Authorize the user with your reverse proxy's flow.
+- - - If the user is not authorized and request is not a `GET`, return a `4xx` status.
+- - Set the header `x-webauth-proxied` (value does not matter).
+- - Proxy request to the server as normal.
+
 ## How is this secure?
 - Files, file names and true file sizes are encrypted using AES-256-GCM which includes integrity and tamper protection alongside a strong block cipher.
 - The server is never shown or given the decryption key at any point, all decryption and encryption happens client-side, the server only stores the resulting ciphertext.
