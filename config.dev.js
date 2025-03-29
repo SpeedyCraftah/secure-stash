@@ -18,6 +18,25 @@ module.exports = {
     },
 
     // The secret to use when encrypting cookies, it must be kept the same.
-    // And if you haven't noticed, I did spam my keyboard to generate this, so please change it to something more secure.
-    cookie_secret: "SAGJNAEOGIEGad24901J£%j($QKg"
+    // Please change it to something more secure.
+    cookie_secret: "K3YB0@RD_SP@M_N0T_S@F3!",
+
+    // Whether to use a TLS (HTTPS) server, recommended (sometimes required) if not using a reverse proxy.
+    // Unnecessary if using a reverse proxy, will only add latency and complicate your setup.
+    // This option is ignored when using a unix socket since TLS becomes pointless at that point.
+    server_tls: {
+        enabled: false,
+        certificate: "/path/to/some/certificate.pem",
+        private_key: "/path/to/some/private_key.key"
+    },
+
+    // The server listener, select one and comment out the other, or set to disabled.
+
+    // Listen using a traditional host + port pair (works on 99% of platforms).
+    server_port_tcp: { enabled: true, host: "127.0.0.1", port: 3000 },
+
+    // Listen using a unix socket file (faster, more secure, but less flexible & only works on unix + some other systems).
+    // Especially recommended if using reverse proxy authentication.
+    // Permissions for the socket are specified as octals (default u=rw,g=rw,o=---).
+    server_unix_socket_tcp: { enabled: false, path: "/tmp/stash_socket.sock", permissions: 0o750 }
 };
